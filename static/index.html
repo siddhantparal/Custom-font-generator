@@ -1,0 +1,101 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Custom Handwriting Font</title>
+  <style>
+    body { font-family: sans-serif; margin: 20px; }
+    #glyphs { display: grid; grid-template-columns: repeat(auto-fill, 120px); gap: 10px; margin-top: 20px; }
+    .glyph-card { border: 1px solid #ccc; padding: 5px; text-align: center; }
+    .glyph-card img { max-width: 100px; max-height: 100px; display: block; margin: 0 auto 5px; }
+    .glyph-card input { width: 100%; text-align: center; }
+  </style>
+</head>
+<body>
+  <h1>Custom Handwriting Font</h1>
+
+  <h3>1. Upload a scanned page</h3>
+  <input type="file" id="fileInput" accept="image/*">
+  <button id="uploadBtn">Upload & Segment</button>
+
+  <h3>2. Label each glyph</h3>
+  <div id="glyphs"></div>
+
+  <h3>3. Generate font</h3>
+  <button id="generateBtn">Generate TTF</button>
+
+  <script>
+    const uploadBtn = document.getElementById('uploadBtn');
+    const fileInput = document.getElementById('fileInput');
+    const glyphsDiv = document.getElementById('glyphs');
+    const generateBtn = document.getElementById('generateBtn');
+
+    uploadBtn.onclick = async () => {
+      const file = fileInput.files[0];
+      if (!file) {
+        alert('Pick an image first');
+        return;
+      }
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const res = await fetch('/upload', { method: 'POST', body: formData });
+      const data = await res.json();
+      renderGlyphs(data.glyphs);
+    };
+
+    function renderGlyphs(glyphs) {
+      glyphsDiv.innerHTML = '';
+      glyphs.forEach(name => {
+        const card = document.createElement('div');
+        card.className = 'glyph-card';
+
+        const img = document.createElement('img');
+        img.src = '/glyphs/' + name;
+; // if you serve glyphs statically
+
+        const label = document.createElement('div');
+        label.textContent = name;
+
+        const input = document.createElement('input');
+        input.placeholder = 'Char';
+
+        card.appendChild(img);
+        card.appendChild(label);
+        card.appendChild(input);
+        glyphsDiv.appendChild(card);
+
+        card.dataset.filename = name;
+      });
+    }
+
+    generateBtn.onclick = async () => {
+      const cards = document.querySelectorAll('.glyph-card');
+      const mapping = {};
+      cards.forEach(card => {
+        const filename = card.dataset.filename;
+        const value = card.querySelector('input').value;
+        mapping[filename] = value;
+      });
+
+      const formData = new FormData();
+      formData.append('mapping_json', JSON.stringify(mapping));
+
+      const res = await fetch('/generate', { method: 'POST', body: formData });
+      if (!res.ok) {
+        alert('Error generating font');
+        return;
+      }
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'MyHandwriting.ttf';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    };
+  </script>
+</body>
+</html>
