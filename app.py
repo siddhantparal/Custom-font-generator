@@ -1,7 +1,5 @@
 from fastapi import FastAPI, UploadFile, File, Form
-from fastapi.responses import FileResponse, JSONResponse
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import HTMLResponse
+from fastapi.responses import FileResponse, JSONResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 import os
 import subprocess
@@ -22,8 +20,8 @@ os.makedirs(GLYPH_DIR, exist_ok=True)
 
 # Serve static frontend
 
-app.mount("/glyphs", StaticFiles(directory=GLYPH_DIR), name="glyphs")
 app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "static")), name="static")
+app.mount("/glyphs", StaticFiles(directory=GLYPH_DIR), name="glyphs")
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -33,18 +31,18 @@ def root():
 
 @app.post("/upload")
 async def upload_image(file: UploadFile = File(...)):
-    # Save uploaded file
-    in_path = os.path.join(UPLOAD_DIR, file.filename)
-    with open(in_path, "wb") as f:
-        f.write(await file.read())
-
-    # TODO: call your existing segmentation script here
-    # e.g. subprocess.run(["python", "segment_handwriting.py", in_path, GLYPH_DIR], check=True)
-
-    # For now, assume GLYPH_DIR already has PNG glyphs
+    # ... your existing code to save file and run segmentation ...
+    
     glyph_files = [f for f in os.listdir(GLYPH_DIR) if f.lower().endswith(".png")]
     glyph_files.sort()
-    return {"glyphs": glyph_files}
+    
+    # 🔽 CHANGE THIS to match frontend structure
+    glyphs = []
+    for name in glyph_files:
+        glyphs.append({"name": name, "suggestion": ""})  # empty suggestions for now
+    
+    return {"glyphs": glyphs}
+
 
 
 @app.get("/glyphs")
@@ -59,7 +57,8 @@ def generate_font(mapping_json: str = Form(...)):
     mapping = json.loads(mapping_json)  # {"0.png": "A", "1.png": "B", ...}
 
     # 1) PNG -> SVG via ImageMagick + Potrace
-    IM_CONVERT =r"C:\Program Files\ImageMagick-6.9.13-Q16-HDRI\convert.exe"  # adjust
+    IM_CONVERT = r"C:\Program Files\ImageMagick-6.9.13-Q16-HDRI\convert.exe"  # adjust
+    POTRACE = r"C:\Potrace\potrace.exe"  # adjust path to your potrace installation
 
     for png_name, char in mapping.items():
         if not char:

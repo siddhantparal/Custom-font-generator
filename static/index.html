@@ -2,100 +2,419 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Custom Handwriting Font</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Custom Handwriting Font Generator</title>
   <style>
-    body { font-family: sans-serif; margin: 20px; }
-    #glyphs { display: grid; grid-template-columns: repeat(auto-fill, 120px); gap: 10px; margin-top: 20px; }
-    .glyph-card { border: 1px solid #ccc; padding: 5px; text-align: center; }
-    .glyph-card img { max-width: 100px; max-height: 100px; display: block; margin: 0 auto 5px; }
-    .glyph-card input { width: 100%; text-align: center; }
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem;
+      background: linear-gradient(135deg, #191c2b 0%, #06111b 100%);
+      min-height: 100vh;
+      color: #333;
+    }
+
+    .container {
+      background: rgba(255, 255, 255, 0.56);
+      border-radius: 20px;
+      padding: 3rem;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+    }
+
+    h1 {
+      text-align: center;
+      color: #4a5568;
+      margin-bottom: 0.5rem;
+      font-size: 2.5rem;
+      font-weight: 700;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #718096;
+      margin-bottom: 3rem;
+      font-size: 1.2rem;
+    }
+
+    .step {
+      margin-bottom: 2.5rem;
+    }
+
+    .step h3 {
+      color: #4a5568;
+      margin-bottom: 1rem;
+      font-size: 1.3rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .step-number {
+      background: linear-gradient(135deg, #1d2548, #30243b);
+      color: white;
+      width: 2rem;
+      height: 2rem;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 0.9rem;
+    }
+
+    .upload-area {
+      border: 3px #cbd5e0;
+      border-radius: 12px;
+      padding: 2.5rem;
+      text-align: center;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      background: #f7fafc;
+    }
+
+    .upload-area:hover,
+    .upload-area.dragover {
+      border-color: #667eea;
+      background: #edf2f7;
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(102, 126, 234, 0.2);
+    }
+
+    #fileInput {
+      display: none;
+    }
+
+    #uploadBtn {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      border: none;
+      padding: 1rem 2rem;
+      border-radius: 50px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    }
+
+    #uploadBtn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
+    }
+
+    #glyphs {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 1.5rem;
+      margin-top: 1rem;
+    }
+
+    .glyph-card {
+      background: white;
+      border-radius: 16px;
+      padding: 1.5rem 1rem;
+      text-align: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      transition: all 0.3s ease;
+      border: 2px solid transparent;
+    }
+
+    .glyph-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 30px rgba(0,0,0,0.15);
+      border-color: #667eea;
+    }
+
+    .glyph-card img {
+      width: 80px;
+      height: 80px;
+      object-fit: contain;
+      margin-bottom: 0.75rem;
+      border-radius: 8px;
+      background: #f7fafc;
+      padding: 0.5rem;
+    }
+
+    .glyph-filename {
+      font-size: 0.85rem;
+      color: #718096;
+      margin-bottom: 0.5rem;
+      font-family: monospace;
+    }
+
+    .glyph-card input {
+      width: 100%;
+      padding: 0.75rem;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 1.2rem;
+      font-weight: 600;
+      text-align: center;
+      transition: border-color 0.3s ease;
+    }
+
+    .glyph-card input:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    #generateBtn {
+      background: linear-gradient(135deg, #48bb78, #38a169);
+      color: white;
+      border: none;
+      padding: 1.25rem 3rem;
+      border-radius: 50px;
+      font-size: 1.2rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: block;
+      margin: 2rem auto 0;
+      transition: all 0.3s ease;
+      box-shadow: 0 6px 20px rgba(72, 187, 120, 0.4);
+    }
+
+    #generateBtn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(72, 187, 120, 0.5);
+    }
+
+    #generateBtn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .status {
+      text-align: center;
+      margin-top: 1rem;
+      padding: 1rem;
+      border-radius: 8px;
+      font-weight: 500;
+    }
+
+    .status.success {
+      background: #c6f6d5;
+      color: #22543d;
+      border: 1px solid #9ae6b4;
+    }
+
+    .status.error {
+      background: #fed7d7;
+      color: #742a2a;
+      border: 1px solid #fc8181;
+    }
+
+    @media (max-width: 768px) {
+      body {
+        padding: 1rem;
+      }
+      .container {
+        padding: 2rem 1.5rem;
+      }
+      #glyphs {
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 1rem;
+      }
+    }
   </style>
 </head>
 <body>
-  <h1>Custom Handwriting Font</h1>
+  <div class="container">
+    <h1>Custom Font Generator</h1>
+    <p class="subtitle">Upload a scanned page of your handwriting and generate a custom font</p>
 
-  <h3>1. Upload a scanned page</h3>
-  <input type="file" id="fileInput" accept="image/*">
-  <button id="uploadBtn">Upload & Segment</button>
+    <div class="step">
+      <h3><span class="step-number">1</span> Upload handwriting sample</h3>
+      <div class="upload-area" id="uploadArea">
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14,2 14,8 20,8"/>
+          <line x1="12" y1="18" x2="12" y2="12"/>
+          <line x1="9.09" y1="8.91" x2="9.09" y2="15.09"/>
+          <line x1="15.09" y1="8.91" x2="15.09" y2="15.09"/>
+          <line x1="14.83" y1="7.17" x2="16.42" y2="7.17"/>
+          <line x1="6.83" y1="16.83" x2="7.42" y2="16.83"/>
+        </svg>
+        <p>Click to select or drag & drop your image</p>
+        <input type="file" id="fileInput" accept="image/*">
+        <button id="uploadBtn">Upload & Segment Glyphs</button>
+      </div>
+    </div>
 
-  <h3>2. Label each glyph</h3>
-  <div id="glyphs"></div>
+    <div class="step" id="labelStep" style="display: none;">
+      <h3><span class="step-number">2</span> Label each glyph</h3>
+      <div id="glyphs"></div>
+    </div>
 
-  <h3>3. Generate font</h3>
-  <button id="generateBtn">Generate TTF</button>
+    <div class="step">
+      <h3><span class="step-number">3</span> Generate your font</h3>
+      <button id="generateBtn" disabled>Generate TTF Font</button>
+      <div id="status"></div>
+    </div>
+  </div>
 
   <script>
-    const uploadBtn = document.getElementById('uploadBtn');
+    const uploadArea = document.getElementById('uploadArea');
     const fileInput = document.getElementById('fileInput');
+    const uploadBtn = document.getElementById('uploadBtn');
+    const labelStep = document.getElementById('labelStep');
     const glyphsDiv = document.getElementById('glyphs');
     const generateBtn = document.getElementById('generateBtn');
+    const statusDiv = document.getElementById('status');
 
-    uploadBtn.onclick = async () => {
+    // Upload area interactions
+    uploadArea.addEventListener('click', () => fileInput.click());
+    uploadArea.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      uploadArea.classList.add('dragover');
+    });
+    uploadArea.addEventListener('dragleave', () => {
+      uploadArea.classList.remove('dragover');
+    });
+    uploadArea.addEventListener('drop', (e) => {
+      e.preventDefault();
+      uploadArea.classList.remove('dragover');
+      fileInput.files = e.dataTransfer.files;
+      uploadHandler();
+    });
+
+    uploadBtn.addEventListener('click', uploadHandler);
+
+    async function uploadHandler() {
       const file = fileInput.files[0];
       if (!file) {
-        alert('Pick an image first');
+        showStatus('Please select an image first', 'error');
         return;
       }
+
+      uploadBtn.disabled = true;
+      uploadBtn.textContent = 'Processing...';
+
       const formData = new FormData();
       formData.append('file', file);
 
-      const res = await fetch('/upload', { method: 'POST', body: formData });
-      const data = await res.json();
-      renderGlyphs(data.glyphs);
-    };
+      try {
+        const res = await fetch('/upload', { method: 'POST', body: formData });
+        const data = await res.json();
+        if (data.glyphs && data.glyphs.length > 0) {
+          renderGlyphs(data.glyphs);
+          labelStep.style.display = 'block';
+          showStatus(`Found ${data.glyphs.length} glyphs! Label them above.`, 'success');
+        } else {
+          showStatus('No glyphs detected. Try a different image.', 'error');
+        }
+      } catch (error) {
+        showStatus('Upload failed: ' + error.message, 'error');
+      } finally {
+        uploadBtn.disabled = false;
+        uploadBtn.textContent = 'Upload & Segment Glyphs';
+      }
+    }
 
     function renderGlyphs(glyphs) {
       glyphsDiv.innerHTML = '';
-      glyphs.forEach(name => {
+      glyphs.forEach(g => {
+        const name = g.name;
+        const suggestion = g.suggestion || '';
+
         const card = document.createElement('div');
         card.className = 'glyph-card';
 
         const img = document.createElement('img');
         img.src = '/glyphs/' + name;
-; // if you serve glyphs statically
+        img.alt = name;
+        img.loading = 'lazy';
 
-        const label = document.createElement('div');
-        label.textContent = name;
+        const filename = document.createElement('div');
+        filename.className = 'glyph-filename';
+        filename.textContent = name;
 
         const input = document.createElement('input');
-        input.placeholder = 'Char';
+        input.value = suggestion;
+        input.placeholder = '?';
+        input.maxLength = 1;
 
         card.appendChild(img);
-        card.appendChild(label);
+        card.appendChild(filename);
         card.appendChild(input);
         glyphsDiv.appendChild(card);
 
         card.dataset.filename = name;
       });
+
+      // Enable generate button when glyphs are present
+      updateGenerateButton();
     }
 
-    generateBtn.onclick = async () => {
+    function updateGenerateButton() {
+      const inputs = glyphsDiv.querySelectorAll('input');
+      const hasGlyphs = inputs.length > 0;
+      generateBtn.disabled = !hasGlyphs;
+    }
+
+    glyphsDiv.addEventListener('input', updateGenerateButton);
+
+    generateBtn.addEventListener('click', async () => {
       const cards = document.querySelectorAll('.glyph-card');
       const mapping = {};
+      let validLabels = 0;
+
       cards.forEach(card => {
         const filename = card.dataset.filename;
-        const value = card.querySelector('input').value;
-        mapping[filename] = value;
+        const value = card.querySelector('input').value.trim();
+        if (value) {
+          mapping[filename] = value;
+          validLabels++;
+        }
       });
+
+      if (validLabels === 0) {
+        showStatus('Please label at least one glyph first!', 'error');
+        return;
+      }
+
+      generateBtn.disabled = true;
+      generateBtn.textContent = 'Generating...';
 
       const formData = new FormData();
       formData.append('mapping_json', JSON.stringify(mapping));
 
-      const res = await fetch('/generate', { method: 'POST', body: formData });
-      if (!res.ok) {
-        alert('Error generating font');
-        return;
+      try {
+        const res = await fetch('/generate', { method: 'POST', body: formData });
+        if (!res.ok) {
+          const errorText = await res.text();
+          throw new Error(errorText || 'Generation failed');
+        }
+
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'MyHandwriting.ttf';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+
+        showStatus(`✅ Font generated! Downloaded ${validLabels} glyphs.`, 'success');
+      } catch (error) {
+        showStatus('Generation failed: ' + error.message, 'error');
+      } finally {
+        generateBtn.disabled = false;
+        generateBtn.textContent = 'Generate TTF Font';
       }
-      const blob = await res.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'MyHandwriting.ttf';
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      window.URL.revokeObjectURL(url);
-    };
+    });
+
+    function showStatus(message, type) {
+      statusDiv.textContent = message;
+      statusDiv.className = `status ${type}`;
+    }
   </script>
 </body>
 </html>
