@@ -284,8 +284,17 @@
       uploadHandler();
     });
 
-    uploadBtn.addEventListener('click', uploadHandler);
-
+    uploadBtn.addEventListener('click', openFileDialog);
+    fileInput.addEventListener('change', () => {
+  if (fileInput.files && fileInput.files[0]) {
+    uploadHandler();
+  }
+});
+// Single function to open dialog
+function openFileDialog(e) {
+  e?.stopPropagation();  // Prevent bubbling if from child
+  fileInput.click();
+}
     async function uploadHandler() {
       const file = fileInput.files[0];
       if (!file) {
@@ -302,6 +311,8 @@
       try {
         const res = await fetch('/upload', { method: 'POST', body: formData });
         const data = await res.json();
+        renderGlyphs(data.glyphs);
+
         if (data.glyphs && data.glyphs.length > 0) {
           renderGlyphs(data.glyphs);
           labelStep.style.display = 'block';
@@ -318,39 +329,38 @@
     }
 
     function renderGlyphs(glyphs) {
-      glyphsDiv.innerHTML = '';
-      glyphs.forEach(g => {
-        const name = g.name;
-        const suggestion = g.suggestion || '';
+  glyphsDiv.innerHTML = '';
+  glyphs.forEach(g => {
+    const name = g.name;
+    const suggestion = g.suggestion || '';
 
-        const card = document.createElement('div');
-        card.className = 'glyph-card';
+    const card = document.createElement('div');
+    card.className = 'glyph-card';
 
-        const img = document.createElement('img');
-        img.src = '/glyphs/' + name;
-        img.alt = name;
-        img.loading = 'lazy';
+    const img = document.createElement('img');
+    img.src = '/glyphs/' + name;
+    img.alt = name;
 
-        const filename = document.createElement('div');
-        filename.className = 'glyph-filename';
-        filename.textContent = name;
+    const filename = document.createElement('div');
+    filename.className = 'glyph-filename';
+    filename.textContent = name;
 
-        const input = document.createElement('input');
-        input.value = suggestion;
-        input.placeholder = '?';
-        input.maxLength = 1;
+    const input = document.createElement('input');
+    input.value = suggestion;   // 🔴 pre-fill suggestion here
+    input.placeholder = '?';
+    input.maxLength = 1;
 
-        card.appendChild(img);
-        card.appendChild(filename);
-        card.appendChild(input);
-        glyphsDiv.appendChild(card);
+    card.appendChild(img);
+    card.appendChild(filename);
+    card.appendChild(input);
+    glyphsDiv.appendChild(card);
 
-        card.dataset.filename = name;
-      });
+    card.dataset.filename = name;
+  });
 
-      // Enable generate button when glyphs are present
-      updateGenerateButton();
-    }
+  updateGenerateButton();
+}
+
 
     function updateGenerateButton() {
       const inputs = glyphsDiv.querySelectorAll('input');

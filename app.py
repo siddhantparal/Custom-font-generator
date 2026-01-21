@@ -1,9 +1,11 @@
-from fastapi import FastAPI, UploadFile, File, Form
-from fastapi.responses import FileResponse, JSONResponse, HTMLResponse
-from fastapi.staticfiles import StaticFiles
 import os
 import subprocess
 import json
+import pytesseract
+from fastapi import FastAPI, UploadFile, File, Form
+from fastapi.responses import FileResponse, JSONResponse, HTMLResponse
+from fastapi.staticfiles import StaticFiles
+from PIL import Image
 
 app = FastAPI()
 
@@ -24,6 +26,16 @@ app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "static")), na
 app.mount("/glyphs", StaticFiles(directory=GLYPH_DIR), name="glyphs")
 
 
+def guess_char_for_png(png_path: str) -> str:
+    img = Image.open(png_path).convert("L")  # grayscale
+
+    # Single‑character mode, restrict to letters/digits
+    config = r'--psm 10 -c tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+    text = pytesseract.image_to_string(img, config=config)
+    text = text.strip()
+
+    return text[:1] if text else ""
+
 @app.get("/", response_class=HTMLResponse)
 def root():
     with open(os.path.join(BASE_DIR, "static", "index.html"), encoding="utf-8") as f:
@@ -31,17 +43,23 @@ def root():
 
 @app.post("/upload")
 async def upload_image(file: UploadFile = File(...)):
-    # ... your existing code to save file and run segmentation ...
-    
+    in_path = os.path.join(UPLOAD_DIR, file.filename)
+    with open(in_path, "wb") as f:
+        f.write(await file.read())
+
+    # TODO: call your segmentation to fill GLYPH_DIR with *.png
+
     glyph_files = [f for f in os.listdir(GLYPH_DIR) if f.lower().endswith(".png")]
     glyph_files.sort()
-    
-    # 🔽 CHANGE THIS to match frontend structure
+
     glyphs = []
     for name in glyph_files:
-        glyphs.append({"name": name, "suggestion": ""})  # empty suggestions for now
-    
+        png_path = os.path.join(GLYPH_DIR, name)
+        suggestion = guess_char_for_png(png_path)
+        glyphs.append({"name": name, "suggestion": suggestion})
+
     return {"glyphs": glyphs}
+
 
 
 
